@@ -2,9 +2,7 @@ fastapi==0.115.6
 uvicorn[standard]==0.34.0
 python-multipart==0.0.20
 
-tensorflow==2.10.0
-keras==2.10.0
-numpy==1.23.5
+tensorflow==2.15.1
 
 opencv-python-headless==4.8.1.78
 Pillow==9.5.0
