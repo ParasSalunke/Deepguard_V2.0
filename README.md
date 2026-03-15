@@ -2,7 +2,7 @@
   <img src="https://img.shields.io/badge/DeepGuard-Explainable%20AI-6366f1?style=for-the-badge" alt="DeepGuard" />
   <img src="https://img.shields.io/badge/Python-3.11-3776ab?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
   <img src="https://img.shields.io/badge/React-18-61dafb?style=for-the-badge&logo=react&logoColor=white" alt="React" />
-  <img src="https://img.shields.io/badge/TensorFlow-2.16-ff6f00?style=for-the-badge&logo=tensorflow&logoColor=white" alt="TensorFlow" />
+  <img src="https://img.shields.io/badge/TensorFlow-2.10-ff6f00?style=for-the-badge&logo=tensorflow&logoColor=white" alt="TensorFlow" />
   <img src="https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
 </p>
 
@@ -10,28 +10,26 @@
 
 **Explainable AI for Image Authenticity Detection**
 
-DeepGuard is an academic-grade system that detects whether an uploaded image is **Real** or **AI-Generated**, and visually explains its decision using **Grad-CAM heatmaps**. Suitable for research presentations, hackathons, and university jury demonstrations.
+DeepGuard is an academic-grade full-stack system that detects whether an uploaded image is **Real** or **AI-Generated**, and visually explains its decision using **Grad-CAM heatmaps**. It combines a ResNet50-based deep learning model, a FastAPI backend, and a React + Vite frontend into a seamless end-to-end pipeline.
 
 ---
 
 ## 📐 Architecture
 
 ```
-User Upload Image
+User Uploads Image
        ↓
-  React Frontend  (Vite + Tailwind CSS)
+  React Frontend  (Vite + Tailwind CSS, port 5173)
+       ↓ POST /predict  (proxied to backend)
+  FastAPI Backend  (Python, port 8000)
        ↓
-    REST API
+ ResNet50 CNN — Binary Classification (Real vs AI-Generated)
        ↓
-  FastAPI Backend  (Python)
+ Grad-CAM Heatmap Generation (Explainability)
        ↓
- CNN Model Prediction  (ResNet50 — Transfer Learning)
+ JSON Response  { label, confidence, reliability, heatmap }
        ↓
- Grad-CAM Heatmap  (Explainability)
-       ↓
-  JSON Response  { label, confidence, reliability, heatmap }
-       ↓
- Frontend Displays Results
+ Frontend Displays Results + Heatmap Overlay
 ```
 
 ---
@@ -42,15 +40,19 @@ User Upload Image
 DeepGuard/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py              # FastAPI entry point
+│   │   ├── __init__.py
+│   │   ├── main.py                  # FastAPI app, CORS, route registration
 │   │   ├── routes/
-│   │   │   └── predict.py       # POST /predict endpoint
+│   │   │   └── predict.py           # POST /predict endpoint
 │   │   ├── services/
-│   │   │   ├── model_service.py # ResNet50 inference
-│   │   │   └── gradcam.py       # Grad-CAM heatmap generation
+│   │   │   ├── model_service.py     # ResNet50 model loading & inference
+│   │   │   └── gradcam.py           # Grad-CAM heatmap generation
 │   │   └── utils/
-│   │       └── image_utils.py   # Image preprocessing & helpers
-│   └── requirements.txt
+│   │       └── image_utils.py       # Validation, preprocessing, base64 encoding
+│   ├── requirements.txt
+│   ├── test_model.py                # Unit test: model loading & prediction
+│   ├── test_gradcam.py              # Unit test: Grad-CAM pipeline
+│   └── test_predict.py              # Unit test: /predict endpoint
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
@@ -61,23 +63,26 @@ DeepGuard/
 │   │   │   ├── FeaturesSection.jsx
 │   │   │   └── Footer.jsx
 │   │   ├── services/
-│   │   │   └── api.js           # Axios API layer
+│   │   │   └── api.js               # Axios API layer
 │   │   ├── App.jsx
 │   │   ├── main.jsx
 │   │   └── index.css
 │   ├── index.html
 │   ├── package.json
-│   ├── vite.config.js
+│   ├── vite.config.js               # Dev proxy: /predict & /health → :8000
 │   ├── tailwind.config.js
-│   └── vercel.json
+│   ├── postcss.config.js
+│   ├── vercel.json
+│   └── .env.example
 ├── model/
-│   └── deepguard_model.h5       # Trained model (you must train or provide this)
+│   └── deepguard_model.h5           # Trained ResNet50 model (~211 MB)
 ├── training/
-│   └── train_model.py           # Full training script
+│   └── train_model.py               # Full training script with CLI args
 ├── dataset/
-│   ├── real/                    # Real photos
-│   └── ai_generated/           # AI-generated images
-├── render.yaml                  # Render deployment blueprint
+│   ├── real/                        # Real photographs (JPG/PNG)
+│   └── ai_generated/                # AI-generated images (JPG/PNG)
+├── render.yaml                      # Render Blueprint for backend deployment
+├── run.md                           # Manual run instructions
 ├── .gitignore
 └── README.md
 ```
@@ -88,12 +93,12 @@ DeepGuard/
 
 ### Prerequisites
 
-| Tool       | Version |
-| ---------- | ------- |
-| Python     | ≥ 3.10  |
-| Node.js    | ≥ 18    |
-| npm        | ≥ 9     |
-| pip / venv | latest  |
+| Tool       | Version  |
+| ---------- | -------- |
+| Python     | ≥ 3.10   |
+| Node.js    | ≥ 18     |
+| npm        | ≥ 9      |
+| pip / venv | latest   |
 
 ---
 
@@ -103,6 +108,8 @@ DeepGuard/
 git clone https://github.com/your-username/DeepGuard.git
 cd DeepGuard
 ```
+
+---
 
 ### 2. Backend Setup
 
@@ -125,7 +132,12 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 The API will be available at **http://localhost:8000**.  
+Swagger docs: `http://localhost:8000/docs`  
 Health check: `GET http://localhost:8000/health`
+
+> **Note:** The backend runs on CPU by default (`CUDA_VISIBLE_DEVICES=-1`). To enable GPU acceleration, remove or modify that line in `app/main.py`.
+
+---
 
 ### 3. Frontend Setup
 
@@ -140,13 +152,13 @@ npm run dev
 ```
 
 The app will be available at **http://localhost:5173**.  
-The Vite dev server automatically proxies `/predict` and `/health` to the backend.
+The Vite dev server automatically proxies `/predict` and `/health` to the backend at `http://localhost:8000`.
 
 ---
 
 ## 📊 Dataset Preparation
 
-Organise your dataset with two sub-folders:
+Organise your dataset in two sub-folders:
 
 ```
 dataset/
@@ -156,47 +168,58 @@ dataset/
 
 **Recommended sources:**
 
-| Dataset                     | Description                            |
-| --------------------------- | -------------------------------------- |
-| CIFAKE                      | 60 K real + 60 K AI images (CIFAR-based) |
-| ArtiFact                    | Multi-generator AI image dataset       |
-| Stable Diffusion outputs    | Generate your own with SD / DALL-E     |
-| Unsplash / Pexels           | High-quality real photographs          |
+| Dataset                  | Description                              |
+| ------------------------ | ---------------------------------------- |
+| CIFAKE                   | 60K real + 60K AI images (CIFAR-based)  |
+| ArtiFact                 | Multi-generator AI image dataset         |
+| Stable Diffusion outputs | Generate with SD / DALL-E / Midjourney   |
+| Unsplash / Pexels        | High-quality real photographs            |
 
-> **Tip:** Aim for at least 1 000 images per class. More data = better accuracy.
+> **Tip:** Aim for at least 1,000 images per class. More data = better accuracy.
 
 ---
 
 ## 🏋️ Model Training
 
+The training script uses **ResNet50 transfer learning** with data augmentation, early stopping, and learning rate scheduling.
+
 ```bash
 cd training
 
-# Basic training (expects ../dataset with real/ and ai_generated/)
+# Basic training (uses ../dataset and saves to ../model/deepguard_model.h5)
 python train_model.py
 
-# Custom options
+# With custom options
 python train_model.py \
   --dataset ../dataset \
   --output ../model/deepguard_model.h5 \
   --epochs 20 \
   --batch 64 \
-  --lr 0.0001
+  --lr 0.0001 \
+  --fine_tune_at 140
 ```
 
-The best model is automatically saved to `model/deepguard_model.h5`.
+The best model checkpoint (by `val_accuracy`) is automatically saved.
 
 ### Training Arguments
 
-| Arg            | Default                         | Description                        |
-| -------------- | ------------------------------- | ---------------------------------- |
-| `--dataset`    | `../dataset`                    | Path to dataset directory          |
-| `--output`     | `../model/deepguard_model.h5`   | Output model path                  |
-| `--epochs`     | `15`                            | Training epochs                    |
-| `--batch`      | `32`                            | Batch size                         |
-| `--img_size`   | `224`                           | Image size (square)                |
-| `--lr`         | `1e-4`                          | Learning rate                      |
-| `--fine_tune_at` | `140`                         | Unfreeze base layers from this idx |
+| Argument         | Default                        | Description                              |
+| ---------------- | ------------------------------ | ---------------------------------------- |
+| `--dataset`      | `../dataset`                   | Path to dataset directory                |
+| `--output`       | `../model/deepguard_model.h5`  | Output model path                        |
+| `--epochs`       | `15`                           | Number of training epochs                |
+| `--batch`        | `32`                           | Batch size                               |
+| `--img_size`     | `224`                          | Input image size (square, px)            |
+| `--lr`           | `1e-4`                         | Learning rate (Adam optimizer)           |
+| `--fine_tune_at` | `140`                          | Unfreeze ResNet50 layers from this index |
+
+### Training Callbacks
+
+| Callback            | Monitors      | Behaviour                               |
+| ------------------- | ------------- | --------------------------------------- |
+| `EarlyStopping`     | `val_loss`    | Stops after 5 epochs with no improvement, restores best weights |
+| `ModelCheckpoint`   | `val_accuracy`| Saves the best model only               |
+| `ReduceLROnPlateau` | `val_loss`    | Halves LR after 3 stagnant epochs       |
 
 ---
 
@@ -212,14 +235,17 @@ GET /health
 { "status": "running" }
 ```
 
-### Prediction
+---
+
+### Predict
 
 ```
 POST /predict
 Content-Type: multipart/form-data
 ```
 
-**Request:** Form field `file` with a JPG or PNG image (≤ 10 MB).
+**Request:**  
+Form field `file` — a JPG or PNG image (≤ 10 MB).
 
 **Response:**
 
@@ -232,11 +258,46 @@ Content-Type: multipart/form-data
 }
 ```
 
+| Field         | Type    | Description                                   |
+| ------------- | ------- | --------------------------------------------- |
+| `label`       | string  | `"Real"` or `"AI-Generated"`                  |
+| `confidence`  | float   | Model confidence score (0.0 – 1.0)            |
+| `reliability` | string  | Qualitative reliability (`"High"`, `"Medium"`, `"Low"`) |
+| `heatmap`     | string  | Base64-encoded PNG of the Grad-CAM overlay    |
+
+**Error responses:**
+
+| Status | Cause                          |
+| ------ | ------------------------------ |
+| `400`  | Invalid file type or file too large |
+| `500`  | Internal server error          |
+
+---
+
 ### Testing with curl
 
 ```bash
 curl -X POST http://localhost:8000/predict \
   -F "file=@test_image.jpg"
+```
+
+---
+
+## 🧪 Backend Tests
+
+Three test scripts are included in the `backend/` directory:
+
+```bash
+cd backend
+
+# Test model loading and prediction
+python test_model.py
+
+# Test Grad-CAM heatmap generation
+python test_gradcam.py
+
+# Test the /predict API endpoint
+python test_predict.py
 ```
 
 ---
@@ -255,6 +316,8 @@ curl -X POST http://localhost:8000/predict \
    ```
 6. Deploy.
 
+---
+
 ### Backend → Render
 
 1. Go to [render.com](https://render.com) → **New Web Service**.
@@ -262,26 +325,28 @@ curl -X POST http://localhost:8000/predict \
 3. Set **Root Directory** to `backend`.
 4. Set **Build Command** to `pip install -r requirements.txt`.
 5. Set **Start Command** to `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
-6. Choose **Python 3.11** runtime.
-7. Upload your trained `deepguard_model.h5` to the `model/` directory (or use Render Disks).
-8. Deploy.
+6. Set **Runtime** to `Python 3.11`.
+7. Add environment variable `PYTHON_VERSION = 3.11.7`.
+8. Upload `deepguard_model.h5` to the `model/` directory (or use Render Disk).
+9. Deploy.
 
-> **Tip:** The included `render.yaml` file can be used with Render Blueprints for one-click deployment.
+> **Tip:** The included `render.yaml` supports [Render Blueprints](https://render.com/docs/infrastructure-as-code) for one-click backend deployment.
 
 ---
 
-## 🧪 Tech Stack
+## 🧰 Tech Stack
 
-| Layer          | Technology                     |
-| -------------- | ------------------------------ |
-| Frontend       | React 18, Vite, Tailwind CSS   |
-| HTTP Client    | Axios                          |
-| Icons          | Lucide React                   |
-| Backend        | Python 3.11, FastAPI           |
-| AI Framework   | TensorFlow / Keras 2.16        |
-| Model          | ResNet50 (Transfer Learning)   |
-| Explainability | Grad-CAM                       |
-| Image Processing | OpenCV, Pillow, NumPy        |
+| Layer            | Technology                                  |
+| ---------------- | ------------------------------------------- |
+| Frontend         | React 18, Vite 6, Tailwind CSS 3            |
+| HTTP Client      | Axios 1.7                                   |
+| Icons            | Lucide React                                |
+| Backend          | Python 3.11, FastAPI 0.115, Uvicorn 0.34    |
+| AI Framework     | TensorFlow 2.10 / Keras 2.10                |
+| Model            | ResNet50 (ImageNet pre-trained, fine-tuned) |
+| Explainability   | Grad-CAM                                    |
+| Image Processing | OpenCV 4.8 (headless), Pillow 9.5, NumPy 1.23 |
+| Deployment       | Vercel (frontend), Render (backend)         |
 
 ---
 
@@ -293,5 +358,5 @@ It is not intended for production forensic or legal use.
 ---
 
 <p align="center">
-  Built with ❤️ for Explainable AI research
+  Built with ❤️ By Team DeepGuard for Explainable AI research
 </p>
