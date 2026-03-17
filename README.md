@@ -223,6 +223,39 @@ The best model checkpoint (by `val_accuracy`) is automatically saved.
 
 ---
 
+## 📈 Model Performance Evaluation
+
+The model was evaluated on the validation split using `backend/evaluate.py`.
+
+### Validation Summary
+
+| Metric | Value |
+| ------ | ----- |
+| Validation samples | 22,000 |
+| Correct predictions | 21,470 |
+| Misclassifications | 530 |
+| Accuracy | 97.59% |
+
+### Class-wise Performance
+
+| Class | Precision | Recall | F1-score |
+| ----- | --------- | ------ | -------- |
+| ai_generated | 96.66% | 99.00% | 97.82% |
+| real | 98.76% | 95.90% | 97.31% |
+
+### Confusion Matrix (Validation)
+
+Rows are actual labels and columns are predicted labels.
+
+| Actual \ Predicted | ai_generated | real |
+| ------------------ | ------------ | ---- |
+| ai_generated | 11,880 | 120 |
+| real | 410 | 9,590 |
+
+![Confusion Matrix: Real vs AI Generated](backend/confusion_matrix.png)
+
+---
+
 ## 🔌 API Reference
 
 ### Health Check
