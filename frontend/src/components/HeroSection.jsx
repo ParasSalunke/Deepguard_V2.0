@@ -1,64 +1,72 @@
-import { ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Shield, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function HeroSection() {
+  const scrollToUpload = () => {
+    document.getElementById('upload')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
-    <section className="relative overflow-hidden pt-20 pb-16 sm:pt-28 sm:pb-24">
-      {/* Decorative gradient blob */}
-      <div
-        aria-hidden="true"
-        className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full
-                   bg-gradient-to-br from-brand-200/40 via-brand-100/20 to-transparent
-                   blur-3xl pointer-events-none"
-      />
+    <section className="relative pt-20 pb-12 sm:pt-32 sm:pb-16">
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="text-center max-w-4xl mx-auto">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-gray-800 border border-brand-200 dark:border-brand-800 shadow-sm mb-8">
+            <Sparkles size={16} className="text-brand-600 dark:text-brand-400" />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Powered by Explainable AI • 97.59% Accuracy
+            </span>
+          </div>
 
-      <div className="relative max-w-4xl mx-auto px-4 text-center">
-        {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full
-                        bg-brand-50 text-brand-700 text-sm font-medium mb-6
-                        border border-brand-200 animate-fade-in-up">
-          <Sparkles size={14} />
-          Powered by Explainable AI
-        </div>
+          {/* Main heading */}
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 dark:text-white mb-6">
+            Detect AI-Generated
+            <span className="block mt-2 bg-gradient-to-r from-brand-600 to-purple-600 bg-clip-text text-transparent">
+              Images Instantly
+            </span>
+          </h1>
 
-        {/* Heading */}
-        <h1
-          className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight
-                     text-gray-900 animate-fade-in-up"
-          style={{ animationDelay: "0.1s" }}
-        >
-          Deep
-          <span className="text-brand-600">Guard</span>
-        </h1>
+          {/* Subtitle */}
+          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-10 leading-relaxed">
+            Identify AI-generated images with advanced deep learning technology.
+            Get instant predictions with confidence scores and visual explanations.
+          </p>
 
-        {/* Subtitle */}
-        <p
-          className="mt-5 text-lg sm:text-xl text-gray-500 max-w-2xl mx-auto
-                     animate-fade-in-up"
-          style={{ animationDelay: "0.2s" }}
-        >
-          Detect AI-generated images with transparency. Get instant predictions,
-          confidence scores, and visual explanations powered by{" "}
-          <span className="font-semibold text-gray-700">Grad-CAM</span>.
-        </p>
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+            <Button
+              onClick={scrollToUpload}
+              className="h-12 px-8 text-base rounded-xl bg-brand-600 hover:bg-brand-700 text-white shadow-lg hover:shadow-xl transition-all"
+            >
+              Try It Now
+              <ArrowRight size={18} className="ml-2" />
+            </Button>
+            <Button
+              variant="outline"
+              asChild
+              className="h-12 px-8 text-base rounded-xl border-2 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
+            >
+              <a href="#how-it-works">
+                Learn How It Works
+              </a>
+            </Button>
+          </div>
 
-        {/* Trust indicators */}
-        <div
-          className="mt-10 flex flex-wrap justify-center gap-6 text-sm text-gray-400
-                     animate-fade-in-up"
-          style={{ animationDelay: "0.35s" }}
-        >
-          <span className="flex items-center gap-1.5">
-            <ShieldCheck size={16} className="text-green-500" />
-            Academic-Grade Model
-          </span>
-          <span className="flex items-center gap-1.5">
-            <ShieldCheck size={16} className="text-green-500" />
-            Explainable Results
-          </span>
-          <span className="flex items-center gap-1.5">
-            <ShieldCheck size={16} className="text-green-500" />
-            Open Source
-          </span>
+          {/* Trust indicators */}
+          <div className="flex flex-wrap justify-center items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex items-center gap-2">
+              <Shield size={18} className="text-green-600 dark:text-green-400" />
+              <span>ResNet50 Architecture</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Shield size={18} className="text-green-600 dark:text-green-400" />
+              <span>Grad-CAM Explainability</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Shield size={18} className="text-green-600 dark:text-green-400" />
+              <span>Open Source</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
