@@ -15,7 +15,7 @@ const stats = [
   },
   {
     icon: <Zap size={24} />,
-    value: "< 2s",
+    value: "< 10s",
     label: "Analysis Speed",
     description: "Fast, real-time predictions",
   },
